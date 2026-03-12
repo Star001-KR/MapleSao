@@ -1,0 +1,22 @@
+---@sealed
+---@description "Records and retrieves information. The function does not work in the World being created."
+@Service
+script LogStorageService extends Service
+
+	---@description "Retrieves World product purchase record. Sets the time of the purchase record to be imported with fromDate and toDate. This operation is performed asynchronously. The function passed to the callbackFunction is called upon completion of the operation. callbackFunction's parameter is the purchase record imported. This feature does not work in the World being created. Using this function is not recommended, as it is a provisional function."
+	---@sealed
+	@ReleaseOnly
+	@ExecSpace("ServerOnly")
+	method void GetPurchaseLogPagesAsync(DateTime fromDate, DateTime toDate, func<PurchaseLogPages> callbackFunction) end
+
+	---@description "Records purchase information. Does not work in the Maker environment."
+	---@sealed
+	@ReleaseOnly
+	@ExecSpace("ServerOnly")
+	method void LogPurchaseInfo(WorldShopPurchaseInfo purchaseInfo, string message) end
+
+	---@sealed
+	@ExecSpace("ServerOnly")
+	method void SendHackLog(string userId, string title, table detail, int32 cnt) end
+
+end

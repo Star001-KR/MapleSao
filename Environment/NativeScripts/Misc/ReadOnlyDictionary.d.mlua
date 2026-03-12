@@ -1,0 +1,29 @@
+---@description "A hash table to save data to by key and value. Provides the function to add, remove, and search data and performs particularly well with searching. Each key must have a unique value. Empty values (nil) are not allowed. K represents the key type to be added to the hash table, and V represents the value type."
+@Misc
+script ReadOnlyDictionary<K, V>
+
+	---@description "Gets the number of keys and values in the Dictionary."
+	---@sealed
+	readonly property number Count
+
+	---@description "Gets the table that includes the Dictionary keys."
+	---@sealed
+	readonly property table Keys
+
+	---@description "Gets the table that includes the Dictionary values."
+	---@sealed
+	readonly property table Values
+
+	---@description "Checks if the specified key is included in the Dictionary."
+	---@sealed
+	method boolean ContainsKey(K key) end
+
+	---@description "Generates a table that has the keys and values included in the Dictionary."
+	---@sealed
+	method table ToTable() end
+
+	---@description "Gets the specified key and the connected value."
+	---@sealed
+	method boolean, V TryGetValue(K key) end
+
+end
