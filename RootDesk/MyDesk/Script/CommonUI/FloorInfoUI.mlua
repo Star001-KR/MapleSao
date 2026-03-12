@@ -1,0 +1,37 @@
+@Logic
+script FloorInfoUI extends Logic
+
+	property Entity floorNameText = "d1000003-0003-4000-8000-000000000003"
+
+	property Entity progressText = "d1000004-0004-4000-8000-000000000004"
+
+	@ExecSpace("Client")
+	method void UpdateFloorName(string userId, integer floorId, string floorName)
+		    if self.floorNameText == nil then
+		        return
+		    end
+		    local textComp = self.floorNameText:GetComponent(TextComponent)
+		    if textComp == nil then
+		        return
+		    end
+		    textComp.Text = floorId .. "층 - " .. floorName
+	end
+
+	@ExecSpace("Client")
+	method void UpdateProgress(string userId, string progressMessage)
+		    if self.progressText == nil then
+		        return
+		    end
+		    local textComp = self.progressText:GetComponent(TextComponent)
+		    if textComp == nil then
+		        return
+		    end
+		    textComp.Text = progressMessage
+	end
+
+	@ExecSpace("Client")
+	method void HideProgress(string userId)
+		    self:UpdateProgress(userId, "")
+	end
+
+end

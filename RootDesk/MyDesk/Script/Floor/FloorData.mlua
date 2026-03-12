@@ -1,0 +1,129 @@
+@Logic
+script FloorData extends Logic
+
+	property string FLOOR_TYPE_TOWN = "town"
+
+	property string FLOOR_TYPE_BATTLE = "battle"
+
+	property string FLOOR_TYPE_BOSS = "boss"
+
+	property string CLEAR_TYPE_NONE = "none"
+
+	property string CLEAR_TYPE_KILL = "kill"
+
+	property string CLEAR_TYPE_BOSS = "boss"
+
+	property any _floors = nil
+
+	method void OnBeginPlay()
+		    self:InitFloorData()
+	end
+
+	method void InitFloorData()
+		    local floors = {}
+		
+		    -- 1층: 시작의 마을 (Town)
+		    floors[1] = {
+		        floorId = 1,
+		        floorName = "시작의 마을",
+		        floorType = self.FLOOR_TYPE_TOWN,
+		        mapName = "map01",
+		        clearType = self.CLEAR_TYPE_NONE,
+		        clearCount = 0,
+		        bossKeyRequired = false,
+		        spawnPosition = Vector2(0, 0),
+		        nextFloorId = 2
+		    }
+		
+		    -- 2층: 시작의 초원 (Battle)
+		    floors[2] = {
+		        floorId = 2,
+		        floorName = "시작의 초원",
+		        floorType = self.FLOOR_TYPE_BATTLE,
+		        mapName = "map02",
+		        clearType = self.CLEAR_TYPE_KILL,
+		        clearCount = 10,
+		        bossKeyRequired = false,
+		        spawnPosition = Vector2(0, 0),
+		        nextFloorId = 3
+		    }
+		
+		    -- 3층: 미궁의 탑 (Boss)
+		    floors[3] = {
+		        floorId = 3,
+		        floorName = "미궁의 탑",
+		        floorType = self.FLOOR_TYPE_BOSS,
+		        mapName = "map03",
+		        clearType = self.CLEAR_TYPE_BOSS,
+		        clearCount = 1,
+		        bossKeyRequired = true,
+		        spawnPosition = Vector2(0, 0),
+		        nextFloorId = nil
+		    }
+		
+		    self._floors = floors
+	end
+
+	method any GetFloorData(integer floorId)
+		    if self._floors == nil then
+		        return nil
+		    end
+		    return self._floors[floorId]
+	end
+
+	method any GetFloorDataByMap(string mapName)
+		    if self._floors == nil then
+		        return nil
+		    end
+		    for id, floor in pairs(self._floors) do
+		        if floor.mapName == mapName then
+		            return floor
+		        end
+		    end
+		    return nil
+	end
+
+	method integer GetTotalFloors()
+		    if self._floors == nil then
+		        return 0
+		    end
+		    local count = 0
+		    for _ in pairs(self._floors) do
+		        count = count + 1
+		    end
+		    return count
+	end
+
+	method boolean IsTownFloor(integer floorId)
+		    local data = self:GetFloorData(floorId)
+		    if data == nil then
+		        return false
+		    end
+		    return data.floorType == self.FLOOR_TYPE_TOWN
+	end
+
+	method boolean IsBossFloor(integer floorId)
+		    local data = self:GetFloorData(floorId)
+		    if data == nil then
+		        return false
+		    end
+		    return data.floorType == self.FLOOR_TYPE_BOSS
+	end
+
+	method string GetMapName(integer floorId)
+		    local data = self:GetFloorData(floorId)
+		    if data == nil then
+		        return ""
+		    end
+		    return data.mapName
+	end
+
+	method any GetNextFloorId(integer floorId)
+		    local data = self:GetFloorData(floorId)
+		    if data == nil then
+		        return nil
+		    end
+		    return data.nextFloorId
+	end
+
+end

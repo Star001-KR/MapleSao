@@ -1,0 +1,247 @@
+@Logic
+script LevelSystem extends Logic
+
+	property any _playerLevels = nil
+
+	property any _expTable = nil
+
+	property integer MAX_LEVEL = 50
+
+	property integer BASE_EXP = 100
+
+	property number EXP_GROWTH_RATE = 1.2
+
+	property integer STAT_POINTS_PER_LEVEL = 3
+
+	property integer HP_PER_POINT = 50
+
+	property integer ATK_PER_POINT = 5
+
+	property integer BASE_HP = 1000
+
+	property integer BASE_ATK = 10
+
+	method void OnBeginPlay()
+		    self._playerLevels = {}
+		    self:BuildExpTable()
+	end
+
+	method void BuildExpTable()
+		    self._expTable = {}
+		    local requiredExp = self.BASE_EXP
+		    for i = 1, self.MAX_LEVEL do
+		        self._expTable[i] = math.floor(requiredExp)
+		        requiredExp = requiredExp * self.EXP_GROWTH_RATE
+		    end
+	end
+
+	method void InitPlayerLevel(string userId)
+		    if self._playerLevels == nil then
+		        self._playerLevels = {}
+		    end
+		    self._playerLevels[userId] = {
+		        level = 1,
+		        exp = 0,
+		        statPoints = 0,
+		        statHp = 0,
+		        statAtk = 0
+		    }
+		    -- 기본 스탯 적용
+		    self:ApplyStats(userId)
+	end
+
+	method void RestorePlayerLevel(string userId, integer level, integer exp, integer statPoints, integer statHp, integer statAtk)
+		    if self._playerLevels == nil then
+		        self._playerLevels = {}
+		    end
+		    self._playerLevels[userId] = {
+		        level = level,
+		        exp = exp,
+		        statPoints = statPoints,
+		        statHp = statHp,
+		        statAtk = statAtk
+		    }
+		    -- 스탯 적용
+		    self:ApplyStats(userId)
+	end
+
+	method void RemovePlayerLevel(string userId)
+		    if self._playerLevels ~= nil then
+		        self._playerLevels[userId] = nil
+		    end
+	end
+
+	method any GetPlayerLevelData(string userId)
+		    if self._playerLevels == nil then
+		        return nil
+		    end
+		    return self._playerLevels[userId]
+	end
+
+	method integer GetLevel(string userId)
+		    local data = self:GetPlayerLevelData(userId)
+		    if data == nil then
+		        return 1
+		    end
+		    return data.level
+	end
+
+	method integer GetExp(string userId)
+		    local data = self:GetPlayerLevelData(userId)
+		    if data == nil then
+		        return 0
+		    end
+		    return data.exp
+	end
+
+	method integer GetRequiredExp(integer level)
+		    if self._expTable == nil or level < 1 or level > self.MAX_LEVEL then
+		        return 999999
+		    end
+		    return self._expTable[level]
+	end
+
+	method integer GetStatPoints(string userId)
+		    local data = self:GetPlayerLevelData(userId)
+		    if data == nil then
+		        return 0
+		    end
+		    return data.statPoints
+	end
+
+	method integer GetTotalHp(string userId)
+		    local data = self:GetPlayerLevelData(userId)
+		    if data == nil then
+		        return self.BASE_HP
+		    end
+		    return self.BASE_HP + (data.statHp * self.HP_PER_POINT)
+	end
+
+	method integer GetTotalAtk(string userId)
+		    local data = self:GetPlayerLevelData(userId)
+		    if data == nil then
+		        return self.BASE_ATK
+		    end
+		    return self.BASE_ATK + (data.statAtk * self.ATK_PER_POINT)
+	end
+
+	@ExecSpace("Server")
+	method void AddExp(string userId, integer amount)
+		    local data = self:GetPlayerLevelData(userId)
+		    if data == nil then
+		        return
+		    end
+		
+		    -- 만렙 체크
+		    if data.level >= self.MAX_LEVEL then
+		        return
+		    end
+		
+		    data.exp = data.exp + amount
+		
+		    -- 레벨업 체크 (연속 레벨업 가능)
+		    local leveledUp = false
+		    while data.level < self.MAX_LEVEL do
+		        local required = self:GetRequiredExp(data.level)
+		        if data.exp < required then
+		            break
+		        end
+		        data.exp = data.exp - required
+		        data.level = data.level + 1
+		        data.statPoints = data.statPoints + self.STAT_POINTS_PER_LEVEL
+		        leveledUp = true
+		    end
+		
+		    -- 만렙 도달 시 잔여 경험치 0
+		    if data.level >= self.MAX_LEVEL then
+		        data.exp = 0
+		    end
+		
+		    if leveledUp then
+		        self:ApplyStats(userId)
+		        self:NotifyLevelUp(userId, data.level, data.statPoints)
+		        -- 데이터 저장
+		        _PlayerDataManager:SavePlayerData(userId)
+		    else
+		        self:NotifyExpGain(userId, amount, data.exp, self:GetRequiredExp(data.level))
+		    end
+	end
+
+	@ExecSpace("Server")
+	method boolean AllocateStatPoint(string userId, string statType, integer points)
+		    local data = self:GetPlayerLevelData(userId)
+		    if data == nil then
+		        return false
+		    end
+		
+		    if data.statPoints < points then
+		        return false
+		    end
+		
+		    if statType == "hp" then
+		        data.statHp = data.statHp + points
+		    elseif statType == "atk" then
+		        data.statAtk = data.statAtk + points
+		    else
+		        return false
+		    end
+		
+		    data.statPoints = data.statPoints - points
+		    self:ApplyStats(userId)
+		    _PlayerDataManager:SavePlayerData(userId)
+		    return true
+	end
+
+	method void ApplyStats(string userId)
+		    if not self:IsServer() then
+		        return
+		    end
+		
+		    local playerEntity = _UserService:GetUserEntityByUserId(userId)
+		    if playerEntity == nil then
+		        return
+		    end
+		
+		    local playerComp = playerEntity:GetComponent(PlayerComponent)
+		    if playerComp == nil then
+		        return
+		    end
+		
+		    -- MaxHp 적용
+		    local totalHp = self:GetTotalHp(userId)
+		    playerComp.MaxHp = totalHp
+		
+		    -- HP가 MaxHp를 초과하지 않도록
+		    if playerComp.Hp > totalHp then
+		        playerComp.Hp = totalHp
+		    end
+		
+		    -- 레벨업 시 HP 회복 (선택)
+		    -- playerComp.Hp = totalHp
+	end
+
+	@ExecSpace("Client")
+	method void NotifyLevelUp(string userId, integer newLevel, integer statPoints)
+		    local message = "레벨 업! Lv." .. newLevel .. " (스탯 포인트: " .. statPoints .. ")"
+		    _UIToast:ShowMessage(message)
+	end
+
+	@ExecSpace("Client")
+	method void NotifyExpGain(string userId, integer amount, integer currentExp, integer requiredExp)
+		    local message = "EXP +" .. amount .. " (" .. currentExp .. "/" .. requiredExp .. ")"
+		    _UIToast:ShowMessage(message)
+	end
+
+	@ExecSpace("Client")
+	method void NotifyStatAllocated(string userId, string statType, integer totalValue)
+		    local statName = ""
+		    if statType == "hp" then
+		        statName = "HP"
+		    elseif statType == "atk" then
+		        statName = "공격력"
+		    end
+		    local message = statName .. " 증가! (현재: " .. totalValue .. ")"
+		    _UIToast:ShowMessage(message)
+	end
+
+end

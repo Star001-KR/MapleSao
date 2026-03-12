@@ -1,0 +1,107 @@
+@Component
+script FloorPortal extends Component
+
+	property integer targetFloorId = 0
+
+	property string portalType = "up"
+
+	property boolean isActive = true
+
+	property any _triggerHandler = nil
+
+	method void OnBeginPlay()
+		    if not self:IsServer() then
+		        return
+		    end
+		
+		    -- TriggerComponent의 TriggerEnter 이벤트 연결
+		    local triggerComp = self.Entity:GetComponent(TriggerComponent)
+		    if triggerComp ~= nil then
+		        self._triggerHandler = self.Entity:ConnectEvent(TriggerEnterEvent, self.OnTriggerEnter)
+		    end
+	end
+
+	method void OnEndPlay()
+		    if self._triggerHandler ~= nil then
+		        self.Entity:DisconnectEvent(TriggerEnterEvent, self._triggerHandler)
+		        self._triggerHandler = nil
+		    end
+	end
+
+	method void OnTriggerEnter(TriggerEnterEvent event)
+		    if not self:IsServer() then
+		        return
+		    end
+		
+		    local enterEntity = event.TriggerBodyEntity
+		    if enterEntity == nil then
+		        return
+		    end
+		
+		    -- 플레이어인지 확인
+		    local playerComp = enterEntity:GetComponent(PlayerComponent)
+		    if playerComp == nil then
+		        return
+		    end
+		
+		    local userId = playerComp.UserId
+		
+		    -- 포탈 비활성 상태
+		    if not self.isActive then
+		        _FloorManager:NotifyCannotMove(userId, "이 포탈은 아직 활성화되지 않았습니다.")
+		        return
+		    end
+		
+		    -- 포탈 타입별 처리
+		    if self.portalType == "boss" then
+		        -- 보스룸 포탈: 키 확인
+		        local currentFloor = _FloorProgress:GetCurrentFloor(userId)
+		        if not _FloorManager:CanEnterBossRoom(userId, currentFloor) then
+		            _FloorManager:NotifyCannotMove(userId, "보스룸 열쇠가 필요합니다.")
+		            return
+		        end
+		        -- 보스룸 진입은 같은 맵 내에서 텔레포트 (추후 구현)
+		        _FloorManager:NotifyCannotMove(userId, "보스룸에 진입합니다!")
+		        return
+		    end
+		
+		    -- 상행/하행 포탈: 층 이동
+		    if self.targetFloorId <= 0 then
+		        return
+		    end
+		
+		    -- 상행 포탈인 경우 클리어 조건 확인
+		    if self.portalType == "up" then
+		        local currentFloor = _FloorProgress:GetCurrentFloor(userId)
+		        if not _FloorManager:IsFloorClearConditionMet(userId, currentFloor) then
+		            -- 미달성: 현재 조건 알림
+		            local floorData = _FloorData:GetFloorData(currentFloor)
+		            if floorData ~= nil and floorData.clearType == _FloorData.CLEAR_TYPE_KILL then
+		                local killCount = _FloorProgress:GetKillCount(userId, currentFloor)
+		                local msg = "클리어 조건 미달성 (" .. killCount .. "/" .. floorData.clearCount .. " 처치)"
+		                _FloorManager:NotifyCannotMove(userId, msg)
+		            else
+		                _FloorManager:NotifyCannotMove(userId, "클리어 조건을 달성하지 못했습니다.")
+		            end
+		            return
+		        end
+		    end
+		
+		    -- 하행 포탈인 경우 자유 이동 (highestFloor 체크는 FloorManager에서 처리)
+		    _FloorManager:RequestMoveToFloor(userId, self.targetFloorId)
+	end
+
+	method void SetPortalActive(boolean active)
+		    self.isActive = active
+		    -- 시각적 피드백 (SpriteRenderer 색상 변경)
+		    local spriteComp = self.Entity:GetComponent(SpriteRendererComponent)
+		    if spriteComp ~= nil then
+		        if active then
+		            spriteComp.Color = Color(0.3, 0.8, 1.0, 1.0) -- 활성: 밝은 파란색
+		        else
+		            spriteComp.Color = Color(0.3, 0.3, 0.3, 0.5) -- 비활성: 어두운 회색
+		        end
+		    end
+	end
+
+end

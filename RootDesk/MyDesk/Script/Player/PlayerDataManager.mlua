@@ -1,0 +1,136 @@
+@Logic
+script PlayerDataManager extends Logic
+
+	property string KEY_HIGHEST_FLOOR = "highestFloor"
+
+	property string KEY_CURRENT_FLOOR = "currentFloor"
+
+	property string KEY_FLOOR_CLEARED = "floorCleared"
+
+	property string KEY_LEVEL = "level"
+
+	property string KEY_EXP = "exp"
+
+	property string KEY_STAT_POINTS = "statPoints"
+
+	property string KEY_STAT_HP = "statHp"
+
+	property string KEY_STAT_ATK = "statAtk"
+
+	@ExecSpace("ServerOnly")
+	method void LoadPlayerData(string userId)
+		    local storage = _DataStorageService:GetUserDataStorage(userId)
+		    if storage == nil then
+		        -- 스토리지 없음 -> 신규 유저
+		        _FloorProgress:InitPlayerProgress(userId)
+		        _LevelSystem:InitPlayerLevel(userId)
+		        return
+		    end
+		
+		    -- 층 진행 데이터 로드
+		    local errorCode1, highestFloorStr = storage:GetAndWait(self.KEY_HIGHEST_FLOOR)
+		    local errorCode2, currentFloorStr = storage:GetAndWait(self.KEY_CURRENT_FLOOR)
+		    local errorCode3, floorClearedStr = storage:GetAndWait(self.KEY_FLOOR_CLEARED)
+		
+		    local highestFloor = 1
+		    local currentFloor = 1
+		    local floorCleared = {}
+		
+		    if highestFloorStr ~= nil and highestFloorStr ~= "" then
+		        highestFloor = tonumber(highestFloorStr) or 1
+		    end
+		    if currentFloorStr ~= nil and currentFloorStr ~= "" then
+		        currentFloor = tonumber(currentFloorStr) or 1
+		    end
+		    if floorClearedStr ~= nil and floorClearedStr ~= "" then
+		        floorCleared = self:DeserializeFloorCleared(floorClearedStr)
+		    end
+		
+		    _FloorProgress:RestorePlayerProgress(userId, currentFloor, highestFloor, floorCleared)
+		
+		    -- 레벨 데이터 로드
+		    local errorCode4, levelStr = storage:GetAndWait(self.KEY_LEVEL)
+		    local errorCode5, expStr = storage:GetAndWait(self.KEY_EXP)
+		    local errorCode6, statPointsStr = storage:GetAndWait(self.KEY_STAT_POINTS)
+		    local errorCode7, statHpStr = storage:GetAndWait(self.KEY_STAT_HP)
+		    local errorCode8, statAtkStr = storage:GetAndWait(self.KEY_STAT_ATK)
+		
+		    local level = 1
+		    local exp = 0
+		    local statPoints = 0
+		    local statHp = 0
+		    local statAtk = 0
+		
+		    if levelStr ~= nil and levelStr ~= "" then
+		        level = tonumber(levelStr) or 1
+		    end
+		    if expStr ~= nil and expStr ~= "" then
+		        exp = tonumber(expStr) or 0
+		    end
+		    if statPointsStr ~= nil and statPointsStr ~= "" then
+		        statPoints = tonumber(statPointsStr) or 0
+		    end
+		    if statHpStr ~= nil and statHpStr ~= "" then
+		        statHp = tonumber(statHpStr) or 0
+		    end
+		    if statAtkStr ~= nil and statAtkStr ~= "" then
+		        statAtk = tonumber(statAtkStr) or 0
+		    end
+		
+		    _LevelSystem:RestorePlayerLevel(userId, level, exp, statPoints, statHp, statAtk)
+	end
+
+	@ExecSpace("ServerOnly")
+	method void SavePlayerData(string userId)
+		    local storage = _DataStorageService:GetUserDataStorage(userId)
+		    if storage == nil then
+		        return
+		    end
+		
+		    -- 층 진행 데이터 저장
+		    local progress = _FloorProgress:GetPlayerProgress(userId)
+		    if progress ~= nil then
+		        storage:SetAndWait(self.KEY_HIGHEST_FLOOR, tostring(progress.highestFloor))
+		        storage:SetAndWait(self.KEY_CURRENT_FLOOR, tostring(progress.currentFloor))
+		        storage:SetAndWait(self.KEY_FLOOR_CLEARED, self:SerializeFloorCleared(progress.floorCleared))
+		    end
+		
+		    -- 레벨 데이터 저장
+		    local levelData = _LevelSystem:GetPlayerLevelData(userId)
+		    if levelData ~= nil then
+		        storage:SetAndWait(self.KEY_LEVEL, tostring(levelData.level))
+		        storage:SetAndWait(self.KEY_EXP, tostring(levelData.exp))
+		        storage:SetAndWait(self.KEY_STAT_POINTS, tostring(levelData.statPoints))
+		        storage:SetAndWait(self.KEY_STAT_HP, tostring(levelData.statHp))
+		        storage:SetAndWait(self.KEY_STAT_ATK, tostring(levelData.statAtk))
+		    end
+	end
+
+	method string SerializeFloorCleared(any floorCleared)
+		    if floorCleared == nil then
+		        return ""
+		    end
+		    local parts = {}
+		    for floorId, cleared in pairs(floorCleared) do
+		        if cleared then
+		            table.insert(parts, tostring(floorId))
+		        end
+		    end
+		    return table.concat(parts, ",")
+	end
+
+	method any DeserializeFloorCleared(string str)
+		    local result = {}
+		    if str == nil or str == "" then
+		        return result
+		    end
+		    for part in string.gmatch(str, "[^,]+") do
+		        local id = tonumber(part)
+		        if id ~= nil then
+		            result[id] = true
+		        end
+		    end
+		    return result
+	end
+
+end

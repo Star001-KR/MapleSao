@@ -1,0 +1,142 @@
+@Logic
+script FloorProgress extends Logic
+
+	property any _playerProgress = nil
+
+	method void OnBeginPlay()
+		    self._playerProgress = {}
+	end
+
+	method void InitPlayerProgress(string userId)
+		    if self._playerProgress == nil then
+		        self._playerProgress = {}
+		    end
+		    self._playerProgress[userId] = {
+		        currentFloor = 1,
+		        highestFloor = 1,
+		        killCounts = {},     -- { [floorId] = count }
+		        hasKey = false,
+		        floorCleared = {}    -- { [floorId] = true/false }
+		    }
+	end
+
+	method void RestorePlayerProgress(string userId, integer currentFloor, integer highestFloor, any floorCleared)
+		    if self._playerProgress == nil then
+		        self._playerProgress = {}
+		    end
+		    self._playerProgress[userId] = {
+		        currentFloor = currentFloor,
+		        highestFloor = highestFloor,
+		        killCounts = {},
+		        hasKey = false,
+		        floorCleared = floorCleared or {}
+		    }
+	end
+
+	method void RemovePlayerProgress(string userId)
+		    if self._playerProgress ~= nil then
+		        self._playerProgress[userId] = nil
+		    end
+	end
+
+	method any GetPlayerProgress(string userId)
+		    if self._playerProgress == nil then
+		        return nil
+		    end
+		    return self._playerProgress[userId]
+	end
+
+	method integer GetCurrentFloor(string userId)
+		    local progress = self:GetPlayerProgress(userId)
+		    if progress == nil then
+		        return 1
+		    end
+		    return progress.currentFloor
+	end
+
+	method integer GetHighestFloor(string userId)
+		    local progress = self:GetPlayerProgress(userId)
+		    if progress == nil then
+		        return 1
+		    end
+		    return progress.highestFloor
+	end
+
+	method integer GetKillCount(string userId, integer floorId)
+		    local progress = self:GetPlayerProgress(userId)
+		    if progress == nil then
+		        return 0
+		    end
+		    if progress.killCounts[floorId] == nil then
+		        return 0
+		    end
+		    return progress.killCounts[floorId]
+	end
+
+	method boolean HasBossKey(string userId)
+		    local progress = self:GetPlayerProgress(userId)
+		    if progress == nil then
+		        return false
+		    end
+		    return progress.hasKey
+	end
+
+	method boolean IsFloorCleared(string userId, integer floorId)
+		    local progress = self:GetPlayerProgress(userId)
+		    if progress == nil then
+		        return false
+		    end
+		    if progress.floorCleared[floorId] == nil then
+		        return false
+		    end
+		    return progress.floorCleared[floorId]
+	end
+
+	method void SetCurrentFloor(string userId, integer floorId)
+		    local progress = self:GetPlayerProgress(userId)
+		    if progress == nil then
+		        return
+		    end
+		    progress.currentFloor = floorId
+		    -- 최고 층 갱신
+		    if floorId > progress.highestFloor then
+		        progress.highestFloor = floorId
+		    end
+	end
+
+	method void AddKillCount(string userId, integer floorId, integer count)
+		    local progress = self:GetPlayerProgress(userId)
+		    if progress == nil then
+		        return
+		    end
+		    if progress.killCounts[floorId] == nil then
+		        progress.killCounts[floorId] = 0
+		    end
+		    progress.killCounts[floorId] = progress.killCounts[floorId] + count
+	end
+
+	method void SetBossKey(string userId, boolean hasKey)
+		    local progress = self:GetPlayerProgress(userId)
+		    if progress == nil then
+		        return
+		    end
+		    progress.hasKey = hasKey
+	end
+
+	method void SetFloorCleared(string userId, integer floorId)
+		    local progress = self:GetPlayerProgress(userId)
+		    if progress == nil then
+		        return
+		    end
+		    progress.floorCleared[floorId] = true
+	end
+
+	method void ResetKillCount(string userId, integer floorId)
+		    local progress = self:GetPlayerProgress(userId)
+		    if progress == nil then
+		        return
+		    end
+		    progress.killCounts[floorId] = 0
+	end
+
+end
