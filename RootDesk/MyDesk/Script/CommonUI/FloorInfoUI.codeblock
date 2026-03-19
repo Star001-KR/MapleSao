@@ -27,7 +27,10 @@
       "Name": "FloorInfoUI",
       "Type": 5,
       "Source": 0,
-      "Target": null
+      "Target": null,
+      "Properties": [],
+      "Methods": [],
+      "EntityEventHandlers": []
     }
   }
 }
