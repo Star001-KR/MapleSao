@@ -21,46 +21,267 @@ script FloorData extends Logic
 
 	method void InitFloorData()
 		    local floors = {}
-		
-		    -- 1층: 시작의 마을 (Town)
+
+		    -- 1층: 시작의 마을 (Town) - 안전지대
 		    floors[1] = {
 		        floorId = 1,
 		        floorName = "시작의 마을",
+		        floorTheme = "town",
 		        floorType = self.FLOOR_TYPE_TOWN,
 		        mapName = "map01",
 		        clearType = self.CLEAR_TYPE_NONE,
 		        clearCount = 0,
 		        bossKeyRequired = false,
 		        spawnPosition = Vector2(0, 0),
-		        nextFloorId = 2
+		        nextFloorId = 2,
+		        recommendedLevel = 1,
+		        monsterIds = {},
+		        monsterMinCount = 0,
+		        monsterMaxCount = 0,
+		        monsterBaseHp = 0,
+		        monsterBaseAtk = 0,
+		        bossId = nil,
+		        bossName = nil,
+		        bossHp = 0,
+		        bossAtk = 0,
+		        expRewardPerMob = 0,
+		        expRewardBoss = 0
 		    }
-		
-		    -- 2층: 시작의 초원 (Battle)
+
+		    -- 2층: 초원의 들판 (Battle) - 슬라임, 늑대
 		    floors[2] = {
 		        floorId = 2,
-		        floorName = "시작의 초원",
+		        floorName = "초원의 들판",
+		        floorTheme = "grassland",
 		        floorType = self.FLOOR_TYPE_BATTLE,
 		        mapName = "map02",
 		        clearType = self.CLEAR_TYPE_KILL,
 		        clearCount = 10,
 		        bossKeyRequired = false,
 		        spawnPosition = Vector2(0, 0),
-		        nextFloorId = 3
+		        nextFloorId = 3,
+		        recommendedLevel = 3,
+		        monsterIds = {"slime_blue", "wolf_shadow"},
+		        monsterMinCount = 5,
+		        monsterMaxCount = 8,
+		        monsterBaseHp = 100,
+		        monsterBaseAtk = 8,
+		        bossId = nil,
+		        bossName = nil,
+		        bossHp = 0,
+		        bossAtk = 0,
+		        expRewardPerMob = 15,
+		        expRewardBoss = 0
 		    }
-		
-		    -- 3층: 미궁의 탑 (Boss)
+
+		    -- 3층: 안개 숲 (Battle) - 숲 생물, 트렌트
 		    floors[3] = {
 		        floorId = 3,
-		        floorName = "미궁의 탑",
-		        floorType = self.FLOOR_TYPE_BOSS,
+		        floorName = "안개 숲",
+		        floorTheme = "forest",
+		        floorType = self.FLOOR_TYPE_BATTLE,
 		        mapName = "map03",
+		        clearType = self.CLEAR_TYPE_KILL,
+		        clearCount = 15,
+		        bossKeyRequired = false,
+		        spawnPosition = Vector2(0, 0),
+		        nextFloorId = 4,
+		        recommendedLevel = 5,
+		        monsterIds = {"mushroom_toxic", "treant_young"},
+		        monsterMinCount = 5,
+		        monsterMaxCount = 10,
+		        monsterBaseHp = 200,
+		        monsterBaseAtk = 15,
+		        bossId = nil,
+		        bossName = nil,
+		        bossHp = 0,
+		        bossAtk = 0,
+		        expRewardPerMob = 25,
+		        expRewardBoss = 0
+		    }
+
+		    -- 4층: 코볼트 요새 (Boss) - 코볼트 로드
+		    floors[4] = {
+		        floorId = 4,
+		        floorName = "코볼트 요새",
+		        floorTheme = "fortress",
+		        floorType = self.FLOOR_TYPE_BOSS,
+		        mapName = "map04",
 		        clearType = self.CLEAR_TYPE_BOSS,
 		        clearCount = 1,
 		        bossKeyRequired = true,
 		        spawnPosition = Vector2(0, 0),
-		        nextFloorId = nil
+		        nextFloorId = 5,
+		        recommendedLevel = 8,
+		        monsterIds = {"kobold_warrior", "kobold_archer"},
+		        monsterMinCount = 3,
+		        monsterMaxCount = 6,
+		        monsterBaseHp = 300,
+		        monsterBaseAtk = 22,
+		        bossId = "boss_kobold_lord",
+		        bossName = "코볼트 로드 일판",
+		        bossHp = 5000,
+		        bossAtk = 45,
+		        expRewardPerMob = 35,
+		        expRewardBoss = 500
 		    }
-		
+
+		    -- 5층: 호수의 마을 (Town) - 중간 휴식
+		    floors[5] = {
+		        floorId = 5,
+		        floorName = "호수의 마을",
+		        floorTheme = "town",
+		        floorType = self.FLOOR_TYPE_TOWN,
+		        mapName = "map05",
+		        clearType = self.CLEAR_TYPE_NONE,
+		        clearCount = 0,
+		        bossKeyRequired = false,
+		        spawnPosition = Vector2(0, 0),
+		        nextFloorId = 6,
+		        recommendedLevel = 10,
+		        monsterIds = {},
+		        monsterMinCount = 0,
+		        monsterMaxCount = 0,
+		        monsterBaseHp = 0,
+		        monsterBaseAtk = 0,
+		        bossId = nil,
+		        bossName = nil,
+		        bossHp = 0,
+		        bossAtk = 0,
+		        expRewardPerMob = 0,
+		        expRewardBoss = 0
+		    }
+
+		    -- 6층: 수정 동굴 (Battle) - 동굴 박쥐, 골렘
+		    floors[6] = {
+		        floorId = 6,
+		        floorName = "수정 동굴",
+		        floorTheme = "cave",
+		        floorType = self.FLOOR_TYPE_BATTLE,
+		        mapName = "map06",
+		        clearType = self.CLEAR_TYPE_KILL,
+		        clearCount = 20,
+		        bossKeyRequired = false,
+		        spawnPosition = Vector2(0, 0),
+		        nextFloorId = 7,
+		        recommendedLevel = 12,
+		        monsterIds = {"bat_cave", "golem_crystal"},
+		        monsterMinCount = 6,
+		        monsterMaxCount = 12,
+		        monsterBaseHp = 500,
+		        monsterBaseAtk = 35,
+		        bossId = nil,
+		        bossName = nil,
+		        bossHp = 0,
+		        bossAtk = 0,
+		        expRewardPerMob = 50,
+		        expRewardBoss = 0
+		    }
+
+		    -- 7층: 폐허 신전 (Battle) - 언데드, 스켈레톤
+		    floors[7] = {
+		        floorId = 7,
+		        floorName = "폐허 신전",
+		        floorTheme = "ruins",
+		        floorType = self.FLOOR_TYPE_BATTLE,
+		        mapName = "map07",
+		        clearType = self.CLEAR_TYPE_KILL,
+		        clearCount = 25,
+		        bossKeyRequired = false,
+		        spawnPosition = Vector2(0, 0),
+		        nextFloorId = 8,
+		        recommendedLevel = 15,
+		        monsterIds = {"skeleton_soldier", "wraith_shadow"},
+		        monsterMinCount = 7,
+		        monsterMaxCount = 14,
+		        monsterBaseHp = 700,
+		        monsterBaseAtk = 48,
+		        bossId = nil,
+		        bossName = nil,
+		        bossHp = 0,
+		        bossAtk = 0,
+		        expRewardPerMob = 70,
+		        expRewardBoss = 0
+		    }
+
+		    -- 8층: 폭풍 봉우리 (Boss) - 스톰 그리폰
+		    floors[8] = {
+		        floorId = 8,
+		        floorName = "폭풍 봉우리",
+		        floorTheme = "storm",
+		        floorType = self.FLOOR_TYPE_BOSS,
+		        mapName = "map08",
+		        clearType = self.CLEAR_TYPE_BOSS,
+		        clearCount = 1,
+		        bossKeyRequired = true,
+		        spawnPosition = Vector2(0, 0),
+		        nextFloorId = 9,
+		        recommendedLevel = 18,
+		        monsterIds = {"harpy_wind", "elemental_storm"},
+		        monsterMinCount = 5,
+		        monsterMaxCount = 10,
+		        monsterBaseHp = 900,
+		        monsterBaseAtk = 60,
+		        bossId = "boss_storm_griffin",
+		        bossName = "스톰 그리폰",
+		        bossHp = 15000,
+		        bossAtk = 120,
+		        expRewardPerMob = 90,
+		        expRewardBoss = 1500
+		    }
+
+		    -- 9층: 어둠의 미궁 (Battle) - 미노타우로스, 그림자 생물
+		    floors[9] = {
+		        floorId = 9,
+		        floorName = "어둠의 미궁",
+		        floorTheme = "labyrinth",
+		        floorType = self.FLOOR_TYPE_BATTLE,
+		        mapName = "map09",
+		        clearType = self.CLEAR_TYPE_KILL,
+		        clearCount = 30,
+		        bossKeyRequired = false,
+		        spawnPosition = Vector2(0, 0),
+		        nextFloorId = 10,
+		        recommendedLevel = 22,
+		        monsterIds = {"minotaur_dark", "shadow_stalker"},
+		        monsterMinCount = 8,
+		        monsterMaxCount = 15,
+		        monsterBaseHp = 1200,
+		        monsterBaseAtk = 75,
+		        bossId = nil,
+		        bossName = nil,
+		        bossHp = 0,
+		        bossAtk = 0,
+		        expRewardPerMob = 120,
+		        expRewardBoss = 0
+		    }
+
+		    -- 10층: 탑의 정상 (Boss) - 해골 기사왕
+		    floors[10] = {
+		        floorId = 10,
+		        floorName = "탑의 정상",
+		        floorTheme = "summit",
+		        floorType = self.FLOOR_TYPE_BOSS,
+		        mapName = "map10",
+		        clearType = self.CLEAR_TYPE_BOSS,
+		        clearCount = 1,
+		        bossKeyRequired = true,
+		        spawnPosition = Vector2(0, 0),
+		        nextFloorId = nil,
+		        recommendedLevel = 25,
+		        monsterIds = {"knight_undead", "mage_dark"},
+		        monsterMinCount = 6,
+		        monsterMaxCount = 10,
+		        monsterBaseHp = 1500,
+		        monsterBaseAtk = 90,
+		        bossId = "boss_skull_knight_king",
+		        bossName = "해골 기사왕",
+		        bossHp = 30000,
+		        bossAtk = 200,
+		        expRewardPerMob = 150,
+		        expRewardBoss = 5000
+		    }
+
 		    self._floors = floors
 	end
 
@@ -124,6 +345,43 @@ script FloorData extends Logic
 		        return nil
 		    end
 		    return data.nextFloorId
+	end
+
+	method any GetMonsterData(integer floorId)
+		    local data = self:GetFloorData(floorId)
+		    if data == nil then
+		        return nil
+		    end
+		    return {
+		        monsterIds = data.monsterIds,
+		        minCount = data.monsterMinCount,
+		        maxCount = data.monsterMaxCount,
+		        baseHp = data.monsterBaseHp,
+		        baseAtk = data.monsterBaseAtk,
+		        expPerMob = data.expRewardPerMob
+		    }
+	end
+
+	method any GetBossData(integer floorId)
+		    local data = self:GetFloorData(floorId)
+		    if data == nil or data.bossId == nil then
+		        return nil
+		    end
+		    return {
+		        bossId = data.bossId,
+		        bossName = data.bossName,
+		        bossHp = data.bossHp,
+		        bossAtk = data.bossAtk,
+		        expReward = data.expRewardBoss
+		    }
+	end
+
+	method integer GetRecommendedLevel(integer floorId)
+		    local data = self:GetFloorData(floorId)
+		    if data == nil then
+		        return 1
+		    end
+		    return data.recommendedLevel
 	end
 
 end

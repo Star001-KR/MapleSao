@@ -1,0 +1,231 @@
+@Logic
+script MonsterData extends Logic
+
+	property any _monsterTypes = nil
+
+	method void OnBeginPlay()
+		    self:InitMonsterData()
+	end
+
+	method void InitMonsterData()
+		    local types = {}
+
+		    -- 2층: 초원의 들판
+		    types["slime_blue"] = {
+		        name = "파란 슬라임",
+		        baseHp = 50,
+		        baseAtk = 5,
+		        expBase = 15,
+		        aiType = "wander",
+		        moveSpeed = 1.5,
+		        attackRange = 1.0,
+		        attackInterval = 2.5
+		    }
+		    types["wolf_shadow"] = {
+		        name = "그림자 늑대",
+		        baseHp = 80,
+		        baseAtk = 12,
+		        expBase = 20,
+		        aiType = "chase",
+		        moveSpeed = 3.0,
+		        attackRange = 1.5,
+		        attackInterval = 2.0
+		    }
+
+		    -- 3층: 안개 숲
+		    types["mushroom_toxic"] = {
+		        name = "독버섯",
+		        baseHp = 90,
+		        baseAtk = 10,
+		        expBase = 25,
+		        aiType = "wander",
+		        moveSpeed = 1.0,
+		        attackRange = 1.2,
+		        attackInterval = 3.0
+		    }
+		    types["treant_young"] = {
+		        name = "어린 트렌트",
+		        baseHp = 150,
+		        baseAtk = 18,
+		        expBase = 30,
+		        aiType = "wander",
+		        moveSpeed = 0.8,
+		        attackRange = 2.0,
+		        attackInterval = 3.5
+		    }
+
+		    -- 4층: 코볼트 요새
+		    types["kobold_warrior"] = {
+		        name = "코볼트 전사",
+		        baseHp = 120,
+		        baseAtk = 20,
+		        expBase = 35,
+		        aiType = "chase",
+		        moveSpeed = 2.5,
+		        attackRange = 1.5,
+		        attackInterval = 2.0
+		    }
+		    types["kobold_archer"] = {
+		        name = "코볼트 궁수",
+		        baseHp = 80,
+		        baseAtk = 25,
+		        expBase = 35,
+		        aiType = "chase",
+		        moveSpeed = 2.0,
+		        attackRange = 5.0,
+		        attackInterval = 2.5
+		    }
+
+		    -- 6층: 수정 동굴
+		    types["bat_cave"] = {
+		        name = "동굴 박쥐",
+		        baseHp = 100,
+		        baseAtk = 30,
+		        expBase = 50,
+		        aiType = "chase",
+		        moveSpeed = 3.5,
+		        attackRange = 1.2,
+		        attackInterval = 1.8
+		    }
+		    types["golem_crystal"] = {
+		        name = "수정 골렘",
+		        baseHp = 300,
+		        baseAtk = 40,
+		        expBase = 65,
+		        aiType = "wander",
+		        moveSpeed = 1.0,
+		        attackRange = 2.0,
+		        attackInterval = 3.0
+		    }
+
+		    -- 7층: 폐허 신전
+		    types["skeleton_soldier"] = {
+		        name = "스켈레톤 병사",
+		        baseHp = 200,
+		        baseAtk = 45,
+		        expBase = 70,
+		        aiType = "chase",
+		        moveSpeed = 2.5,
+		        attackRange = 1.8,
+		        attackInterval = 2.0
+		    }
+		    types["wraith_shadow"] = {
+		        name = "그림자 망령",
+		        baseHp = 150,
+		        baseAtk = 55,
+		        expBase = 80,
+		        aiType = "chase",
+		        moveSpeed = 3.0,
+		        attackRange = 2.5,
+		        attackInterval = 2.5
+		    }
+
+		    -- 8층: 폭풍 봉우리
+		    types["harpy_wind"] = {
+		        name = "바람 하피",
+		        baseHp = 250,
+		        baseAtk = 55,
+		        expBase = 90,
+		        aiType = "chase",
+		        moveSpeed = 4.0,
+		        attackRange = 2.0,
+		        attackInterval = 1.8
+		    }
+		    types["elemental_storm"] = {
+		        name = "폭풍 정령",
+		        baseHp = 350,
+		        baseAtk = 65,
+		        expBase = 100,
+		        aiType = "wander",
+		        moveSpeed = 2.0,
+		        attackRange = 3.0,
+		        attackInterval = 2.5
+		    }
+
+		    -- 9층: 어둠의 미궁
+		    types["minotaur_dark"] = {
+		        name = "어둠의 미노타우로스",
+		        baseHp = 500,
+		        baseAtk = 80,
+		        expBase = 120,
+		        aiType = "chase",
+		        moveSpeed = 2.5,
+		        attackRange = 2.5,
+		        attackInterval = 2.5
+		    }
+		    types["shadow_stalker"] = {
+		        name = "그림자 추적자",
+		        baseHp = 300,
+		        baseAtk = 70,
+		        expBase = 110,
+		        aiType = "chase",
+		        moveSpeed = 4.0,
+		        attackRange = 2.0,
+		        attackInterval = 1.5
+		    }
+
+		    -- 10층: 탑의 정상
+		    types["knight_undead"] = {
+		        name = "언데드 기사",
+		        baseHp = 600,
+		        baseAtk = 90,
+		        expBase = 150,
+		        aiType = "chase",
+		        moveSpeed = 2.5,
+		        attackRange = 2.0,
+		        attackInterval = 2.0
+		    }
+		    types["mage_dark"] = {
+		        name = "암흑 마법사",
+		        baseHp = 400,
+		        baseAtk = 110,
+		        expBase = 160,
+		        aiType = "chase",
+		        moveSpeed = 2.0,
+		        attackRange = 5.0,
+		        attackInterval = 3.0
+		    }
+
+		    self._monsterTypes = types
+	end
+
+	method any GetMonsterType(string typeId)
+		    if self._monsterTypes == nil then
+		        return nil
+		    end
+		    return self._monsterTypes[typeId]
+	end
+
+	method integer CalcMonsterHp(string typeId, integer floorId)
+		    local monsterType = self:GetMonsterType(typeId)
+		    if monsterType == nil then
+		        return 100
+		    end
+		    return math.floor(monsterType.baseHp * (1 + (floorId - 1) * 0.5))
+	end
+
+	method integer CalcMonsterAtk(string typeId, integer floorId)
+		    local monsterType = self:GetMonsterType(typeId)
+		    if monsterType == nil then
+		        return 10
+		    end
+		    return math.floor(monsterType.baseAtk * (1 + (floorId - 1) * 0.5))
+	end
+
+	method integer CalcMonsterExp(string typeId, integer floorId)
+		    local monsterType = self:GetMonsterType(typeId)
+		    if monsterType == nil then
+		        return 10
+		    end
+		    return math.floor(monsterType.expBase * (1 + (floorId - 1) * 0.3))
+	end
+
+	method string GetMonsterName(string typeId)
+		    local monsterType = self:GetMonsterType(typeId)
+		    if monsterType == nil then
+		        return "알 수 없는 몬스터"
+		    end
+		    return monsterType.name
+	end
+
+end

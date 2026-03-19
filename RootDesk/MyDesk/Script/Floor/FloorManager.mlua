@@ -28,14 +28,24 @@ script FloorManager extends Logic
 
 	method void OnUserEnter(UserEnterEvent event)
 		    local userId = event.UserId
-		    
+
+		    -- 서비스 초기화 대기 (맵 전환 시 타이밍 이슈 방어)
+		    if _PlayerDataManager == nil then
+		        return
+		    end
+
 		    -- 플레이어 데이터 로드 시도
 		    _PlayerDataManager:LoadPlayerData(userId)
 	end
 
 	method void OnUserLeave(UserLeaveEvent event)
 		    local userId = event.UserId
-		    
+
+		    -- 서비스 초기화 대기 (맵 전환 시 타이밍 이슈 방어)
+		    if _PlayerDataManager == nil then
+		        return
+		    end
+
 		    -- 플레이어 데이터 저장 후 정리
 		    _PlayerDataManager:SavePlayerData(userId)
 		    _FloorProgress:RemovePlayerProgress(userId)
@@ -48,36 +58,69 @@ script FloorManager extends Logic
 		    if playerEntity == nil then
 		        return false
 		    end
-		
+
 		    -- 2. 이동 가능 여부 확인
 		    if not self:CanMoveToFloor(userId, targetFloorId) then
 		        return false
 		    end
-		
+
 		    -- 3. 층 데이터 가져오기
 		    local floorData = _FloorData:GetFloorData(targetFloorId)
 		    if floorData == nil then
 		        return false
 		    end
-		
-		    -- 4. 플레이어 이동
+
+		    -- 4. 보스 층이고 보스 키가 필요한 경우
+		    if floorData.bossKeyRequired then
+		        if not self:CanEnterBossRoom(userId, targetFloorId) then
+		            self:NotifyCannotMove(userId, "보스룸 열쇠가 필요합니다!")
+		            return false
+		        end
+		    end
+
+		    -- 5. 플레이어 이동
 		    local playerComp = playerEntity:GetComponent(PlayerComponent)
 		    if playerComp == nil then
 		        return false
 		    end
-		
-		    playerComp:MoveToMapPosition(floorData.mapName, floorData.spawnPosition)
-		
-		    -- 5. 진행도 업데이트
+
+		    -- 보스 층 진입 시 인스턴스 룸 사용
+		    if floorData.floorType == _FloorData.FLOOR_TYPE_BOSS then
+		        self:EnterBossRoom(userId, targetFloorId, floorData)
+		    else
+		        playerComp:MoveToMapPosition(floorData.mapName, floorData.spawnPosition)
+		    end
+
+		    -- 6. 진행도 업데이트
 		    _FloorProgress:SetCurrentFloor(userId, targetFloorId)
-		
-		    -- 6. 클라이언트에 층 변경 알림
+
+		    -- 7. 클라이언트에 층 변경 알림
 		    self:NotifyFloorChanged(userId, targetFloorId)
-		
-		    -- 7. 데이터 저장
+
+		    -- 8. 데이터 저장
 		    _PlayerDataManager:SavePlayerData(userId)
-		
+
 		    return true
+	end
+
+	@ExecSpace("ServerOnly")
+	method void EnterBossRoom(string userId, integer floorId, any floorData)
+		    local roomKey = "boss_floor_" .. tostring(floorId)
+
+		    -- 인스턴스 룸 생성 또는 가져오기
+		    local room = _RoomService:GetOrCreateInstanceRoom(roomKey, 30)
+		    if room == nil then
+		        return
+		    end
+
+		    -- 유저를 인스턴스 룸으로 이동
+		    _RoomService:MoveUserToInstanceRoom(roomKey, userId, floorData.mapName)
+	end
+
+	@ExecSpace("ServerOnly")
+	method void LeaveBossRoom(string userId)
+		    -- 유저를 정적 룸(메인 월드)으로 복귀
+		    _RoomService:MoveUserToStaticRoom(userId)
 	end
 
 	method boolean CanMoveToFloor(string userId, integer targetFloorId)
@@ -157,6 +200,15 @@ script FloorManager extends Logic
 		        if killCount >= floorData.clearCount then
 		            _FloorProgress:SetFloorCleared(userId, floorId)
 		            self:NotifyFloorCleared(userId, floorId)
+
+		            -- 다음 층이 보스 층이면 보스 키 자동 지급
+		            local nextFloorId = floorData.nextFloorId
+		            if nextFloorId ~= nil then
+		                local nextFloor = _FloorData:GetFloorData(nextFloorId)
+		                if nextFloor ~= nil and nextFloor.bossKeyRequired then
+		                    self:OnBossKeyAcquired(userId)
+		                end
+		            end
 		        end
 		    end
 	end
@@ -165,8 +217,19 @@ script FloorManager extends Logic
 	method void OnBossKilled(string userId, integer floorId)
 		    _FloorProgress:SetFloorCleared(userId, floorId)
 		    _FloorProgress:SetBossKey(userId, false) -- 키 소모
+
+		    -- 보스 EXP 보상
+		    local floorData = _FloorData:GetFloorData(floorId)
+		    if floorData ~= nil and floorData.expRewardBoss > 0 then
+		        _LevelSystem:AddExp(userId, floorData.expRewardBoss)
+		    end
+
 		    self:NotifyFloorCleared(userId, floorId)
-		    
+		    self:NotifyBossDefeated(userId, floorId)
+
+		    -- 보스룸에서 나가기
+		    self:LeaveBossRoom(userId)
+
 		    -- 데이터 저장
 		    _PlayerDataManager:SavePlayerData(userId)
 	end
@@ -185,12 +248,33 @@ script FloorManager extends Logic
 		    end
 		    local message = floorId .. "층 - " .. floorData.floorName
 		    _UIToast:ShowMessage(message)
+
+		    -- 상단 층 정보 UI 업데이트
+		    _FloorInfoUI:UpdateFloorName(userId, floorId, floorData.floorName)
+
+		    -- 배틀 층이면 진행률 표시, 마을이면 숨김
+		    if floorData.floorType == _FloorData.FLOOR_TYPE_BATTLE then
+		        _FloorInfoUI:UpdateProgress(userId, "처치: 0/" .. floorData.clearCount)
+		    elseif floorData.floorType == _FloorData.FLOOR_TYPE_BOSS then
+		        _FloorInfoUI:UpdateProgress(userId, "보스 처치")
+		    else
+		        _FloorInfoUI:HideProgress(userId)
+		    end
+
+		    -- 권장 레벨 안내
+		    local recLevel = floorData.recommendedLevel
+		    if recLevel ~= nil and recLevel > 0 then
+		        _UIToast:ShowMessage("권장 레벨: Lv." .. recLevel)
+		    end
 	end
 
 	@ExecSpace("Client")
 	method void NotifyKillCountUpdate(string userId, integer floorId, integer current, integer required)
 		    local message = "처치: " .. current .. "/" .. required
 		    _UIToast:ShowMessage(message)
+
+		    -- 상단 진행률 UI 업데이트
+		    _FloorInfoUI:UpdateProgress(userId, message)
 	end
 
 	@ExecSpace("Client")
@@ -200,6 +284,16 @@ script FloorManager extends Logic
 		        return
 		    end
 		    local message = floorData.floorName .. " 클리어! 다음 층 포탈이 활성화되었습니다."
+		    _UIToast:ShowMessage(message)
+	end
+
+	@ExecSpace("Client")
+	method void NotifyBossDefeated(string userId, integer floorId)
+		    local bossData = _FloorData:GetBossData(floorId)
+		    if bossData == nil then
+		        return
+		    end
+		    local message = bossData.bossName .. " 격파! EXP +" .. bossData.expReward
 		    _UIToast:ShowMessage(message)
 	end
 

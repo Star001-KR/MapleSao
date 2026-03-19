@@ -1,0 +1,132 @@
+@Component
+script MonsterSpawner extends Component
+
+	property integer floorId = 1
+
+	property string monsterModelId = "model://32c3df79-08fc-4d7e-b515-54b4e7822975"
+
+	property string monsterTypeId = ""
+
+	property integer maxSpawnCount = 5
+
+	property number spawnInterval = 10.0
+
+	property number spawnRadius = 5.0
+
+	property any _spawnedMonsters = nil
+
+	property integer _spawnTimerId = 0
+
+	method void OnBeginPlay()
+		    if not self:IsServer() then
+		        return
+		    end
+
+		    self._spawnedMonsters = {}
+
+		    -- 층 데이터에서 몬스터 정보 자동 설정
+		    local floorData = _FloorData:GetFloorData(self.floorId)
+		    if floorData ~= nil then
+		        self.maxSpawnCount = floorData.monsterMaxCount
+		    end
+
+		    -- 초기 스폰
+		    self:SpawnMonsters()
+
+		    -- 리스폰 타이머 설정
+		    self._spawnTimerId = _TimerService:SetTimerRepeat(function()
+		        self:SpawnMonsters()
+		    end, self.spawnInterval, self.spawnInterval)
+	end
+
+	method void OnEndPlay()
+		    if self._spawnTimerId ~= 0 then
+		        _TimerService:ClearTimer(self._spawnTimerId)
+		        self._spawnTimerId = 0
+		    end
+	end
+
+	method void SpawnMonsters()
+		    if not self:IsServer() then
+		        return
+		    end
+
+		    -- 죽은 몬스터 정리
+		    self:CleanupDeadMonsters()
+
+		    -- 현재 살아있는 몬스터 수 확인
+		    local aliveCount = self:GetAliveCount()
+		    local toSpawn = self.maxSpawnCount - aliveCount
+
+		    if toSpawn <= 0 then
+		        return
+		    end
+
+		    -- 층 데이터에서 스폰 가능한 몬스터 타입 가져오기
+		    local floorData = _FloorData:GetFloorData(self.floorId)
+		    if floorData == nil or #floorData.monsterIds == 0 then
+		        return
+		    end
+
+		    local transformComp = self.Entity:GetComponent(TransformComponent)
+		    if transformComp == nil then
+		        return
+		    end
+		    local myPos = transformComp.WorldPosition
+
+		    for i = 1, toSpawn do
+		        -- 랜덤 몬스터 타입 선택
+		        local randomIdx = math.random(1, #floorData.monsterIds)
+		        local typeId = floorData.monsterIds[randomIdx]
+
+		        -- 랜덤 스폰 위치 계산
+		        local offsetX = (math.random() - 0.5) * 2 * self.spawnRadius
+		        local offsetY = 0
+		        local spawnPos = Vector3(myPos.x + offsetX, myPos.y + offsetY, myPos.z)
+
+		        -- 몬스터 이름
+		        local monsterName = _MonsterData:GetMonsterName(typeId) .. "_" .. tostring(i)
+
+		        -- 몬스터 모델 스폰
+		        if self.monsterModelId ~= "" then
+		            local entity = _SpawnService:SpawnByModelId(self.monsterModelId, monsterName, spawnPos, self.Entity)
+		            if entity ~= nil then
+		                -- MonsterComponent 초기화
+		                local monsterComp = entity:GetComponent(MonsterComponent)
+		                if monsterComp ~= nil then
+		                    monsterComp:InitMonster(typeId, self.floorId)
+		                end
+		                table.insert(self._spawnedMonsters, entity)
+		            end
+		        end
+		    end
+	end
+
+	method void CleanupDeadMonsters()
+		    if self._spawnedMonsters == nil then
+		        return
+		    end
+
+		    local alive = {}
+		    for _, entity in ipairs(self._spawnedMonsters) do
+		        if _EntityService:IsValid(entity) then
+		            table.insert(alive, entity)
+		        end
+		    end
+		    self._spawnedMonsters = alive
+	end
+
+	method integer GetAliveCount()
+		    if self._spawnedMonsters == nil then
+		        return 0
+		    end
+		    local count = 0
+		    for _, entity in ipairs(self._spawnedMonsters) do
+		        if _EntityService:IsValid(entity) then
+		            count = count + 1
+		        end
+		    end
+		    return count
+	end
+
+end

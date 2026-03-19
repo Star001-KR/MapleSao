@@ -1,7 +1,7 @@
 {
   "Id": "",
   "GameId": "",
-  "EntryKey": "map://map01",
+  "EntryKey": "map://map03",
   "ContentType": "x-mod/map",
   "Content": "",
   "Usage": 0,
@@ -14,12 +14,12 @@
     "Use": "Binary",
     "Entities": [
       {
-        "id": "fa27369a-b436-4381-b0aa-74decc414c3b",
-        "path": "/maps/map01",
+        "id": "1062e193-90ba-4876-94b0-3d9547e9c77a",
+        "path": "/maps/map03",
         "componentNames": "MOD.Core.MapComponent,MOD.Core.FootholdComponent",
         "jsonString": {
-          "name": "map01",
-          "path": "/maps/map01",
+          "name": "map03",
+          "path": "/maps/map03",
           "nameEditable": false,
           "enable": true,
           "visible": true,
@@ -40,7 +40,7 @@
               "FootholdsByLayer": {
                 "1": [
                   {
-                    "Length": 1.22000015,
+                    "Length": 1.21999967,
                     "NextFootholdId": 2,
                     "PreviousFootholdId": 5,
                     "groupID": 1,
@@ -58,11 +58,11 @@
                     "OwnerId": "0944e50b-570b-4a0f-91e7-aa30fece54e8",
                     "Id": 1,
                     "StartPoint": {
-                      "x": -2.57,
+                      "x": -2.56999969,
                       "y": 0.119999975
                     },
                     "EndPoint": {
-                      "x": -1.34999979,
+                      "x": -1.35,
                       "y": 0.119999975
                     },
                     "Variance": {
@@ -182,11 +182,11 @@
                     "OwnerId": "0944e50b-570b-4a0f-91e7-aa30fece54e8",
                     "Id": 5,
                     "StartPoint": {
-                      "x": -2.57,
+                      "x": -2.56999969,
                       "y": -0.9
                     },
                     "EndPoint": {
-                      "x": -2.57,
+                      "x": -2.56999969,
                       "y": 0.119999975
                     },
                     "Variance": {
@@ -234,12 +234,12 @@
         }
       },
       {
-        "id": "c0bb5aca-7a32-4904-b0ce-9ead4071afd9",
-        "path": "/maps/map01/Background",
+        "id": "384d3bdf-5232-4081-82b2-cfd5c205eef7",
+        "path": "/maps/map03/Background",
         "componentNames": "MOD.Core.BackgroundComponent",
         "jsonString": {
           "name": "Background",
-          "path": "/maps/map01/Background",
+          "path": "/maps/map03/Background",
           "nameEditable": false,
           "enable": true,
           "visible": true,
@@ -260,12 +260,12 @@
         }
       },
       {
-        "id": "5d941ba2-5bd5-47da-8cb7-91e9775978cd",
-        "path": "/maps/map01/MapleMapLayer",
+        "id": "c8adcb2d-104b-4ef8-8478-c98a67c354e3",
+        "path": "/maps/map03/MapleMapLayer",
         "componentNames": "MOD.Core.MapLayerComponent",
         "jsonString": {
           "name": "MapleMapLayer",
-          "path": "/maps/map01/MapleMapLayer",
+          "path": "/maps/map03/MapleMapLayer",
           "nameEditable": false,
           "enable": true,
           "visible": true,
@@ -296,12 +296,12 @@
         }
       },
       {
-        "id": "0944e50b-570b-4a0f-91e7-aa30fece54e8",
-        "path": "/maps/map01/TileMap",
+        "id": "78407503-ecaf-4326-a902-7055b5626fc8",
+        "path": "/maps/map03/TileMap",
         "componentNames": "MOD.Core.TransformComponent,MOD.Core.TileMapComponent",
         "jsonString": {
           "name": "TileMap",
-          "path": "/maps/map01/TileMap",
+          "path": "/maps/map03/TileMap",
           "nameEditable": false,
           "enable": true,
           "visible": true,
@@ -563,89 +563,6 @@
                   },
                   "tileIndex": 0
                 }
-              ],
-              "Enable": true
-            }
-          ],
-          "@version": 1
-        }
-      },
-      {
-        "id": "d48bf002-883e-43b0-bf81-0b1cf45e6533",
-        "path": "/maps/map01/portal-1",
-        "componentNames": "MOD.Core.TransformComponent,MOD.Core.SpriteRendererComponent,MOD.Core.PortalComponent,MOD.Core.TagComponent",
-        "jsonString": {
-          "name": "portal-1",
-          "path": "/maps/map01/portal-1",
-          "nameEditable": true,
-          "enable": true,
-          "visible": true,
-          "localize": false,
-          "displayOrder": 3,
-          "pathConstraints": "///",
-          "revision": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "Portal",
-            "sub_entity_id": null,
-            "root_entity_id": "d48bf002-883e-43b0-bf81-0b1cf45e6533",
-            "replaced_model_id": null
-          },
-          "modelId": "portal",
-          "@components": [
-            {
-              "@type": "MOD.Core.TransformComponent",
-              "Position": {
-                "x": -1.73435175,
-                "y": 0.192484319,
-                "z": 999.999
-              },
-              "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
-              },
-              "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
-              },
-              "Enable": true
-            },
-            {
-              "@type": "MOD.Core.SpriteRendererComponent",
-              "ActionSheet": {},
-              "EndFrameIndex": 2147483647,
-              "RenderSetting": 0,
-              "SortingLayer": "MapLayer0",
-              "SpriteRUID": "edd691cd6ce2417c81f1aee6b6ebedd3",
-              "StartFrameIndex": 0,
-              "Enable": true
-            },
-            {
-              "@type": "MOD.Core.PortalComponent",
-              "BoxOffset": {
-                "x": 0.0149999857,
-                "y": 0.63
-              },
-              "BoxSize": {
-                "x": 1.01,
-                "y": 1.42
-              },
-              "IsLegacy": false,
-              "PortalEntityRef": {
-                "tempEntityId": null,
-                "IsRelative": false,
-                "EntityId": "f4f69ed1-61d0-4428-911c-c73df7bdfb96",
-                "Version2": false
-              },
-              "Enable": true
-            },
-            {
-              "@type": "MOD.Core.TagComponent",
-              "Tags": [
-                "MODRespawnArea"
               ],
               "Enable": true
             }

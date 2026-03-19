@@ -5,6 +5,30 @@ script FloorInfoUI extends Logic
 
 	property Entity progressText = "d1000004-0004-4000-8000-000000000004"
 
+	method void RefreshFloorInfo()
+		    local userId = _UserService.LocalUserId
+		    if userId == nil or userId == "" then
+		        return
+		    end
+
+		    local currentFloor = _FloorProgress:GetCurrentFloor(userId)
+		    local floorData = _FloorData:GetFloorData(currentFloor)
+		    if floorData == nil then
+		        return
+		    end
+
+		    self:UpdateFloorName(userId, currentFloor, floorData.floorName)
+		
+		    if floorData.floorType == _FloorData.FLOOR_TYPE_BATTLE then
+		        local killCount = _FloorProgress:GetKillCount(userId, currentFloor)
+		        self:UpdateProgress(userId, "처치: " .. killCount .. "/" .. floorData.clearCount)
+		    elseif floorData.floorType == _FloorData.FLOOR_TYPE_BOSS then
+		        self:UpdateProgress(userId, "보스 처치")
+		    else
+		        self:HideProgress(userId)
+		    end
+	end
+
 	@ExecSpace("Client")
 	method void UpdateFloorName(string userId, integer floorId, string floorName)
 		    if self.floorNameText == nil then

@@ -1,7 +1,7 @@
 {
   "Id": "",
   "GameId": "",
-  "EntryKey": "codeblock://b1000007-0007-4000-8000-000000000007",
+  "EntryKey": "codeblock://c2000002-0002-4000-8000-000000000012",
   "ContentType": "x-mod/codeblock",
   "Content": "",
   "Usage": 0,
@@ -21,13 +21,16 @@
         "Major": 1,
         "Minor": 1
       },
-      "Description": "Floor info HUD UI controller",
-      "Id": "b1000007-0007-4000-8000-000000000007",
+      "Description": "Monster spawner component for battle maps",
+      "Id": "c2000002-0002-4000-8000-000000000012",
       "Language": 1,
-      "Name": "FloorInfoUI",
-      "Type": 5,
+      "Name": "MonsterSpawner",
+      "Type": 1,
       "Source": 0,
-      "Target": null
+      "Target": null,
+      "Properties": [],
+      "Methods": [],
+      "EntityEventHandlers": []
     }
   }
 }

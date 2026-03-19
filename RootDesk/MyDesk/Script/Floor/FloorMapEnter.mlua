@@ -1,0 +1,27 @@
+@Component
+script FloorMapEnter extends Component
+
+	@ExecSpace("ClientOnly")
+	method void OnMapEnter(Entity map)
+		    -- map 엔티티의 이름(맵 이름)으로 직접 층 데이터 조회
+		    if map == nil then
+		        return
+		    end
+
+		    local mapName = map.Name
+		    local floorData = _FloorData:GetFloorDataByMap(mapName)
+		    if floorData == nil then
+		        return
+		    end
+		    _FloorInfoUI:UpdateFloorName("", floorData.floorId, floorData.floorName)
+
+		    if floorData.floorType == _FloorData.FLOOR_TYPE_BATTLE then
+		        _FloorInfoUI:UpdateProgress("", "처치: 0/" .. floorData.clearCount)
+		    elseif floorData.floorType == _FloorData.FLOOR_TYPE_BOSS then
+		        _FloorInfoUI:UpdateProgress("", "보스 처치")
+		    else
+		        _FloorInfoUI:HideProgress("")
+		    end
+	end
+
+end

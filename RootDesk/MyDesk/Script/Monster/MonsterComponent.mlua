@@ -1,0 +1,111 @@
+@Component
+script MonsterComponent extends Component
+
+	property string monsterTypeId = ""
+
+	property integer floorId = 1
+
+	property integer hp = 100
+
+	property integer maxHp = 100
+
+	property integer atk = 10
+
+	property integer expReward = 10
+
+	property boolean isDead = false
+
+	property string monsterName = ""
+
+	method void OnBeginPlay()
+		    -- 서버에서만 로직 처리
+		    if not self:IsServer() then
+		        return
+		    end
+	end
+
+	method void InitMonster(string typeId, integer floor)
+		    self.monsterTypeId = typeId
+		    self.floorId = floor
+
+		    -- MonsterData에서 스탯 계산
+		    self.maxHp = _MonsterData:CalcMonsterHp(typeId, floor)
+		    self.hp = self.maxHp
+		    self.atk = _MonsterData:CalcMonsterAtk(typeId, floor)
+		    self.expReward = _MonsterData:CalcMonsterExp(typeId, floor)
+		    self.monsterName = _MonsterData:GetMonsterName(typeId)
+		    self.isDead = false
+	end
+
+	@ExecSpace("Server")
+	method void TakeDamage(integer damage, string attackerUserId)
+		    if self.isDead then
+		        return
+		    end
+
+		    self.hp = self.hp - damage
+		    if self.hp < 0 then
+		        self.hp = 0
+		    end
+
+		    -- HP바 업데이트 (클라이언트)
+		    self:UpdateHpDisplay(self.hp, self.maxHp, self.monsterName)
+
+		    -- 사망 처리
+		    if self.hp <= 0 then
+		        self:OnDeath(attackerUserId)
+		    end
+	end
+
+	@ExecSpace("Server")
+	method void OnDeath(string killerUserId)
+		    if self.isDead then
+		        return
+		    end
+		    self.isDead = true
+
+		    -- 처치자에게 EXP 지급
+		    if killerUserId ~= nil and killerUserId ~= "" then
+		        _LevelSystem:AddExp(killerUserId, self.expReward)
+		    end
+
+		    -- FloorManager에 킬 보고
+		    if killerUserId ~= nil and killerUserId ~= "" then
+		        _FloorManager:OnMonsterKilled(killerUserId, self.floorId)
+		    end
+
+		    -- 사망 상태 전환
+		    local stateComp = self.Entity:GetComponent(StateComponent)
+		    if stateComp ~= nil then
+		        stateComp:ChangeState("DEAD")
+		    end
+
+		    -- 사망 알림
+		    if killerUserId ~= nil and killerUserId ~= "" then
+		        self:NotifyMonsterKilled(killerUserId, self.monsterName, self.expReward)
+		    end
+
+		    -- 딜레이 후 엔티티 제거
+		    _EntityService:Destroy(self.Entity, 2.0)
+	end
+
+	@ExecSpace("Client")
+	method void UpdateHpDisplay(integer currentHp, integer maxHpValue, string name)
+		    -- 몬스터 머리 위 HP바 업데이트는 추후 UI 컴포넌트에서 처리
+	end
+
+	@ExecSpace("Client")
+	method void NotifyMonsterKilled(string userId, string name, integer exp)
+		    local message = name .. " 처치! EXP +" .. exp
+		    _UIToast:ShowMessage(message)
+	end
+
+	method integer GetAttackDamage()
+		    return self.atk
+	end
+
+	method boolean IsAlive()
+		    return not self.isDead and self.hp > 0
+	end
+
+end
