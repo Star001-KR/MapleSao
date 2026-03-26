@@ -1,0 +1,199 @@
+@Component
+script PlayerCombat extends Component
+
+	property integer _currentHp = 0
+
+	property integer _maxHp = 0
+
+	property boolean _isDead = false
+
+	property any _hitHandler = nil
+
+	method void OnBeginPlay()
+		    if not self:IsServer() then
+		        return
+		    end
+
+		    -- 플레이어 UserId 가져오기
+		    local playerComp = self.Entity:GetComponent(PlayerComponent)
+		    if playerComp == nil then
+		        return
+		    end
+
+		    local userId = playerComp.UserId
+
+		    -- LevelSystem에서 스탯 기반 HP 초기화
+		    self._maxHp = _LevelSystem:GetTotalHp(userId)
+		    self._currentHp = self._maxHp
+		    self._isDead = false
+
+		    -- HitComponent 이벤트 연결 (피격 처리)
+		    local hitComp = self.Entity:GetComponent(HitComponent)
+		    if hitComp ~= nil then
+		        self._hitHandler = self.Entity:ConnectEvent(HitEvent, self.OnHitReceived)
+		    end
+	end
+
+	method void OnEndPlay()
+		    if self._hitHandler ~= nil then
+		        self.Entity:DisconnectEvent(HitEvent, self._hitHandler)
+		        self._hitHandler = nil
+		    end
+	end
+
+	method void OnHitReceived(HitEvent event)
+		    if not self:IsServer() then
+		        return
+		    end
+
+		    if self._isDead then
+		        return
+		    end
+
+		    -- 안전지대 확인
+		    local playerComp = self.Entity:GetComponent(PlayerComponent)
+		    if playerComp == nil then
+		        return
+		    end
+
+		    local userId = playerComp.UserId
+		    local currentFloor = _FloorProgress:GetCurrentFloor(userId)
+		    if _FloorData:IsTownFloor(currentFloor) then
+		        return -- 마을에서는 데미지 무효
+		    end
+
+		    -- 공격자로부터 데미지 계산
+		    local attackerEntity = event.AttackBodyEntity
+		    if attackerEntity == nil then
+		        return
+		    end
+
+		    local damage = 0
+		    local monsterComp = attackerEntity:GetComponent(MonsterComponent)
+		    if monsterComp ~= nil then
+		        damage = monsterComp:GetAttackDamage()
+		    end
+
+		    if damage <= 0 then
+		        return
+		    end
+
+		    -- 데미지 적용
+		    self._currentHp = self._currentHp - damage
+		    if self._currentHp < 0 then
+		        self._currentHp = 0
+		    end
+
+		    -- 클라이언트에 HP 업데이트
+		    self:NotifyHpUpdate(userId, self._currentHp, self._maxHp, damage)
+
+		    -- 사망 처리
+		    if self._currentHp <= 0 then
+		        self:OnPlayerDeath(userId, currentFloor)
+		    end
+	end
+
+	@ExecSpace("ServerOnly")
+	method void OnPlayerDeath(string userId, integer floorId)
+		    if self._isDead then
+		        return
+		    end
+		    self._isDead = true
+
+		    -- 사망 상태 전환
+		    local stateComp = self.Entity:GetComponent(StateComponent)
+		    if stateComp ~= nil then
+		        stateComp:ChangeState("DEAD")
+		    end
+
+		    -- 사망 패널티 적용
+		    _DeathPenalty:ApplyDeathPenalty(userId, floorId)
+
+		    -- 사망 알림
+		    self:NotifyPlayerDeath(userId, floorId)
+
+		    -- 3초 후 부활 처리
+		    _TimerService:SetTimerOnce(function()
+		        self:Revive(userId)
+		    end, 3.0)
+	end
+
+	@ExecSpace("ServerOnly")
+	method void Revive(string userId)
+		    self._isDead = false
+
+		    -- HP 전체 회복
+		    self._maxHp = _LevelSystem:GetTotalHp(userId)
+		    self._currentHp = self._maxHp
+
+		    -- 상태 복구
+		    local stateComp = self.Entity:GetComponent(StateComponent)
+		    if stateComp ~= nil then
+		        stateComp:ChangeState("IDLE")
+		    end
+
+		    -- HP 업데이트 알림
+		    self:NotifyHpUpdate(userId, self._currentHp, self._maxHp, 0)
+		    self:NotifyRevive(userId)
+	end
+
+	@ExecSpace("ServerOnly")
+	method void HealHp(string userId, integer amount)
+		    if self._isDead then
+		        return
+		    end
+
+		    self._currentHp = self._currentHp + amount
+		    if self._currentHp > self._maxHp then
+		        self._currentHp = self._maxHp
+		    end
+
+		    self:NotifyHpUpdate(userId, self._currentHp, self._maxHp, 0)
+	end
+
+	@ExecSpace("ServerOnly")
+	method void RefreshStats(string userId)
+		    -- 레벨업 등으로 스탯 변경 시 호출
+		    local prevMax = self._maxHp
+		    self._maxHp = _LevelSystem:GetTotalHp(userId)
+
+		    -- 증가분만큼 현재 HP도 증가
+		    if self._maxHp > prevMax then
+		        self._currentHp = self._currentHp + (self._maxHp - prevMax)
+		    end
+
+		    self:NotifyHpUpdate(userId, self._currentHp, self._maxHp, 0)
+	end
+
+	method boolean IsDead()
+		    return self._isDead
+	end
+
+	method integer GetCurrentHp()
+		    return self._currentHp
+	end
+
+	method integer GetMaxHp()
+		    return self._maxHp
+	end
+
+	@ExecSpace("Client")
+	method void NotifyHpUpdate(string userId, integer currentHp, integer maxHpValue, integer damage)
+		    _PlayerStatusUI:UpdateHp(userId, currentHp, maxHpValue)
+
+		    if damage > 0 then
+		        _UIToast:ShowMessage("피격! -" .. damage .. " HP (" .. currentHp .. "/" .. maxHpValue .. ")")
+		    end
+	end
+
+	@ExecSpace("Client")
+	method void NotifyPlayerDeath(string userId, integer floorId)
+		    _UIToast:ShowMessage("사망했습니다... 마을로 귀환합니다.")
+	end
+
+	@ExecSpace("Client")
+	method void NotifyRevive(string userId)
+		    _UIToast:ShowMessage("부활! HP가 회복되었습니다.")
+	end
+
+end

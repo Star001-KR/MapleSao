@@ -1,0 +1,36 @@
+{
+  "Id": "",
+  "GameId": "",
+  "EntryKey": "codeblock://d1000005-0005-4000-8000-000000000001",
+  "ContentType": "x-mod/codeblock",
+  "Content": "",
+  "Usage": 0,
+  "UsePublish": 1,
+  "UseService": 0,
+  "CoreVersion": "26.1.0.0",
+  "StudioVersion": "0.1.0.0",
+  "DynamicLoading": 0,
+  "ContentProto": {
+    "Use": "Json",
+    "Json": {
+      "CoreVersion": {
+        "Major": 0,
+        "Minor": 2
+      },
+      "ScriptVersion": {
+        "Major": 1,
+        "Minor": 1
+      },
+      "Description": "Player combat component for damage calculation, hit handling, and death processing",
+      "Id": "d1000005-0005-4000-8000-000000000001",
+      "Language": 1,
+      "Name": "PlayerCombat",
+      "Type": 1,
+      "Source": 0,
+      "Target": null,
+      "Properties": [],
+      "Methods": [],
+      "EntityEventHandlers": []
+    }
+  }
+}
